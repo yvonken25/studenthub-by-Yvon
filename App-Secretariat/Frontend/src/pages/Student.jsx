@@ -22,7 +22,7 @@ export default function Student() {
           <tbody>
             {notes.map((n, i) => (
               <tr key={i}>
-                <td>{n.cours_id}</td>
+                <td>{n.cours ? `${n.cours.code} — ${n.cours.titre}` : n.cours_id}</td>
                 <td>{n.valeur} / 20</td>
                 <td>{n.commentaire}</td>
                 <td>{new Date(n.cree_le).toLocaleDateString('fr-BE')}</td>

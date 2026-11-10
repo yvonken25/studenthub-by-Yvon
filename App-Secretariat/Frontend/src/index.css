@@ -48,3 +48,11 @@ input { padding: 9px; border: 1px solid #cbd2d9; border-radius: 6px; }
 .contenu { max-width: 900px; margin: 24px auto; padding: 0 24px; }
 table { width: 100%; border-collapse: collapse; background: #fff; }
 th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e4e7eb; }
+.onglets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+button.secondaire { background: #e4e7eb; color: #1f2933; }
+button.danger { background: #b42318; }
+.actions { display: flex; gap: 6px; }
+.ok { color: #067647; }
+td input { width: 100%; }
+.colonne-note { width: 110px; }
+td small { display: block; margin-top: 4px; }
