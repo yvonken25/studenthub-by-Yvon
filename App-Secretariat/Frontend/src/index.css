@@ -56,3 +56,27 @@ button.danger { background: #b42318; }
 td input { width: 100%; }
 .colonne-note { width: 110px; }
 td small { display: block; margin-top: 4px; }
+
+h2 { margin: 28px 0 12px; font-size: 20px; }
+.formulaire {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fff;
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+textarea {
+  padding: 9px;
+  border: 1px solid #cbd2d9;
+  border-radius: 6px;
+  font: inherit;
+  resize: vertical;
+}
+.badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+.badge.en_attente { background: #fef3c7; color: #92400e; }
+.badge.acceptee { background: #d1fae5; color: #065f46; }
+.badge.refusee { background: #fee2e2; color: #991b1b; }
+.detail { margin-top: 4px; font-size: 13px; color: #52606d; }
+td .actions { margin-top: 6px; }

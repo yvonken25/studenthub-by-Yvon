@@ -1,4 +1,5 @@
 import Layout from '../components/Layout';
+import DemandesAdmin from '../components/DemandesAdmin';
 import { useApi } from '../hooks/useApi';
 import { LIBELLE_ROLE } from '../auth/roles';
 
@@ -7,6 +8,10 @@ export default function Admin() {
 
   return (
     <Layout titre="Supervision générale">
+      <h2>Demandes au secrétariat</h2>
+      <DemandesAdmin />
+
+      <h2>Utilisateurs</h2>
       {erreur && <p className="erreur">{erreur}</p>}
       {!profils && !erreur && <p>Chargement...</p>}
       {profils && (

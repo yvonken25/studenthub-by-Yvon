@@ -9,3 +9,9 @@ export const LIBELLE_ROLE = {
   professeur: 'Professeur',
   admin: 'Administrateur',
 };
+
+export const LIBELLE_STATUT = {
+  en_attente: 'En attente',
+  acceptee: 'Acceptée',
+  refusee: 'Refusée',
+};

@@ -1,11 +1,13 @@
 import Layout from '../components/Layout';
+import DemandesEtudiant from '../components/DemandesEtudiant';
 import { useApi } from '../hooks/useApi';
 
 export default function Student() {
   const { donnees: notes, erreur } = useApi('/etudiant/mes-notes');
 
   return (
-    <Layout titre="Mes notes">
+    <Layout titre="Mon espace">
+      <h2>Mes notes</h2>
       {erreur && <p className="erreur">{erreur}</p>}
       {!notes && !erreur && <p>Chargement...</p>}
       {notes && notes.length === 0 && <p>Aucune note pour le moment.</p>}
@@ -31,6 +33,9 @@ export default function Student() {
           </tbody>
         </table>
       )}
+
+      <h2>Mes demandes au secrétariat</h2>
+      <DemandesEtudiant />
     </Layout>
   );
 }
