@@ -1,0 +1,50 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f4f6f8;
+  color: #1f2933;
+}
+button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.6; cursor: default; }
+.connexion { min-height: 100vh; display: grid; place-items: center; }
+.carte {
+  width: 340px;
+  padding: 28px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.carte h1 { margin: 0; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+input { padding: 9px; border: 1px solid #cbd2d9; border-radius: 6px; }
+.erreur { color: #b42318; margin: 0; }
+.entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e4e7eb;
+}
+.entete button { margin-left: 12px; }
+.role {
+  margin-left: 10px;
+  padding: 2px 8px;
+  background: #e0e7ff;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.contenu { max-width: 900px; margin: 24px auto; padding: 0 24px; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e4e7eb; }

@@ -15,7 +15,7 @@ router.post('/login', async (req, res) => {
     password: mot_de_passe,
   });
   if (error) {
-    console.log('Erreur login Supabase :', error.message);
+    
     return res.status(401).json({ erreur: 'Identifiants incorrects' });
   }
 
