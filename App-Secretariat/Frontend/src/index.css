@@ -80,3 +80,32 @@ textarea {
 .badge.refusee { background: #fee2e2; color: #991b1b; }
 .detail { margin-top: 4px; font-size: 13px; color: #52606d; }
 td .actions { margin-top: 6px; }
+select {
+  padding: 9px;
+  border: 1px solid #cbd2d9;
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
+}
+.ligne-formulaire {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  background: #fff;
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.ligne-formulaire label { flex: 1 1 160px; }
+.panneau { background: #f8fafc; padding: 14px; border-radius: 8px; }
+.puces { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.puces li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #e8eef7;
+  border-radius: 14px;
+  padding: 4px 6px 4px 12px;
+}
+.puces button { padding: 2px 8px; }

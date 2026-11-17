@@ -73,4 +73,224 @@ router.patch('/demandes/:id', async (req, res) => {
   res.json(data);
 });
 
+// ===================== Gestion des cours et des roles =====================
+const REGEX_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ROLES = ['etudiant', 'professeur', 'admin'];
+
+function estUuid(valeur) {
+  return typeof valeur === 'string' && REGEX_UUID.test(valeur);
+}
+
+function idEntier(valeur) {
+  const n = Number(valeur);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+// Verifie qu'un profil existe avec le role attendu
+async function profilAvecRole(db, id, role) {
+  const { data } = await db
+    .from('profils')
+    .select('id')
+    .eq('id', id)
+    .eq('role', role)
+    .maybeSingle();
+  return Boolean(data);
+}
+
+// Liste des cours avec le nom du professeur
+router.get('/cours', async (req, res) => {
+  const { data, error } = await req.db
+    .from('cours')
+    .select('id, code, titre, professeur_id, profils(nom_complet)')
+    .order('code');
+  if (error) return res.status(500).json({ erreur: error.message });
+
+  res.json(
+    data.map(({ profils, ...c }) => ({ ...c, professeur: profils?.nom_complet ?? null }))
+  );
+});
+
+// Creer un cours
+router.post('/cours', async (req, res) => {
+  const corps = req.body || {};
+  const code = typeof corps.code === 'string' ? corps.code.trim().toUpperCase() : '';
+  const titre = typeof corps.titre === 'string' ? corps.titre.trim() : '';
+
+  if (code.length < 2 || code.length > 20) {
+    return res.status(400).json({ erreur: 'Le code doit faire entre 2 et 20 caracteres' });
+  }
+  if (titre.length < 3 || titre.length > 120) {
+    return res.status(400).json({ erreur: 'Le titre doit faire entre 3 et 120 caracteres' });
+  }
+
+  let professeurId = null;
+  if (corps.professeur_id) {
+    if (!estUuid(corps.professeur_id) ||
+        !(await profilAvecRole(req.db, corps.professeur_id, 'professeur'))) {
+      return res.status(400).json({ erreur: 'Professeur invalide' });
+    }
+    professeurId = corps.professeur_id;
+  }
+
+  const { data, error } = await req.db
+    .from('cours')
+    .insert({ code, titre, professeur_id: professeurId })
+    .select('id, code, titre, professeur_id')
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ erreur: 'Ce code de cours existe deja' });
+    }
+    return res.status(500).json({ erreur: error.message });
+  }
+  res.status(201).json(data);
+});
+
+// Modifier le titre et/ou le professeur d'un cours
+router.patch('/cours/:id', async (req, res) => {
+  const id = idEntier(req.params.id);
+  if (!id) return res.status(400).json({ erreur: 'Identifiant de cours invalide' });
+
+  const corps = req.body || {};
+  const maj = {};
+
+  if ('titre' in corps) {
+    const titre = typeof corps.titre === 'string' ? corps.titre.trim() : '';
+    if (titre.length < 3 || titre.length > 120) {
+      return res.status(400).json({ erreur: 'Le titre doit faire entre 3 et 120 caracteres' });
+    }
+    maj.titre = titre;
+  }
+
+  if ('professeur_id' in corps) {
+    if (corps.professeur_id === null || corps.professeur_id === '') {
+      maj.professeur_id = null;
+    } else if (estUuid(corps.professeur_id) &&
+               (await profilAvecRole(req.db, corps.professeur_id, 'professeur'))) {
+      maj.professeur_id = corps.professeur_id;
+    } else {
+      return res.status(400).json({ erreur: 'Professeur invalide' });
+    }
+  }
+
+  if (Object.keys(maj).length === 0) {
+    return res.status(400).json({ erreur: 'Rien a modifier' });
+  }
+
+  const { data, error } = await req.db
+    .from('cours')
+    .update(maj)
+    .eq('id', id)
+    .select('id, code, titre, professeur_id')
+    .maybeSingle();
+
+  if (error) return res.status(500).json({ erreur: error.message });
+  if (!data) return res.status(404).json({ erreur: 'Cours introuvable' });
+  res.json(data);
+});
+
+// Supprimer un cours (supprime aussi ses inscriptions et ses notes)
+router.delete('/cours/:id', async (req, res) => {
+  const id = idEntier(req.params.id);
+  if (!id) return res.status(400).json({ erreur: 'Identifiant de cours invalide' });
+
+  const { data, error } = await req.db.from('cours').delete().eq('id', id).select('id');
+  if (error) return res.status(500).json({ erreur: error.message });
+  if (!data || data.length === 0) {
+    return res.status(404).json({ erreur: 'Cours introuvable' });
+  }
+  res.status(204).end();
+});
+
+// Etudiants inscrits a un cours
+router.get('/cours/:id/inscriptions', async (req, res) => {
+  const id = idEntier(req.params.id);
+  if (!id) return res.status(400).json({ erreur: 'Identifiant de cours invalide' });
+
+  const { data, error } = await req.db
+    .from('inscriptions')
+    .select('etudiant_id, profils(nom_complet)')
+    .eq('cours_id', id);
+  if (error) return res.status(500).json({ erreur: error.message });
+
+  res.json(
+    data
+      .map((i) => ({ etudiant_id: i.etudiant_id, nom_complet: i.profils?.nom_complet ?? '' }))
+      .sort((a, b) => a.nom_complet.localeCompare(b.nom_complet, 'fr'))
+  );
+});
+
+// Inscrire un etudiant
+router.post('/cours/:id/inscriptions', async (req, res) => {
+  const id = idEntier(req.params.id);
+  if (!id) return res.status(400).json({ erreur: 'Identifiant de cours invalide' });
+
+  const etudiantId = req.body?.etudiant_id;
+  if (!estUuid(etudiantId) || !(await profilAvecRole(req.db, etudiantId, 'etudiant'))) {
+    return res.status(400).json({ erreur: 'Etudiant invalide' });
+  }
+
+  const { error } = await req.db
+    .from('inscriptions')
+    .insert({ etudiant_id: etudiantId, cours_id: id });
+
+  if (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ erreur: 'Etudiant deja inscrit a ce cours' });
+    }
+    if (error.code === '23503') {
+      return res.status(404).json({ erreur: 'Cours introuvable' });
+    }
+    return res.status(500).json({ erreur: error.message });
+  }
+  res.status(201).json({ etudiant_id: etudiantId, cours_id: id });
+});
+
+// Desinscrire un etudiant (supprime aussi sa note dans ce cours)
+router.delete('/cours/:id/inscriptions/:etudiantId', async (req, res) => {
+  const id = idEntier(req.params.id);
+  if (!id || !estUuid(req.params.etudiantId)) {
+    return res.status(400).json({ erreur: 'Identifiant invalide' });
+  }
+
+  const { data, error } = await req.db
+    .from('inscriptions')
+    .delete()
+    .eq('cours_id', id)
+    .eq('etudiant_id', req.params.etudiantId)
+    .select('cours_id');
+
+  if (error) return res.status(500).json({ erreur: error.message });
+  if (!data || data.length === 0) {
+    return res.status(404).json({ erreur: 'Inscription introuvable' });
+  }
+  res.status(204).end();
+});
+
+// Changer le role d'un utilisateur
+router.patch('/profils/:id/role', async (req, res) => {
+  const { id } = req.params;
+  if (!estUuid(id)) return res.status(400).json({ erreur: 'Identifiant invalide' });
+
+  const role = req.body?.role;
+  if (!ROLES.includes(role)) {
+    return res.status(400).json({ erreur: 'Role invalide' });
+  }
+  if (id === req.utilisateur.id) {
+    return res.status(400).json({ erreur: 'Vous ne pouvez pas modifier votre propre role' });
+  }
+
+  const { data, error } = await req.db
+    .from('profils')
+    .update({ role })
+    .eq('id', id)
+    .select('id, nom_complet, role')
+    .maybeSingle();
+
+  if (error) return res.status(500).json({ erreur: error.message });
+  if (!data) return res.status(404).json({ erreur: 'Utilisateur introuvable' });
+  res.json(data);
+});
+
 module.exports = router;

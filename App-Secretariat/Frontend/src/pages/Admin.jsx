@@ -1,39 +1,33 @@
+import { useState } from 'react';
 import Layout from '../components/Layout';
 import DemandesAdmin from '../components/DemandesAdmin';
-import { useApi } from '../hooks/useApi';
-import { LIBELLE_ROLE } from '../auth/roles';
+import GestionCours from '../components/GestionCours';
+import UtilisateursAdmin from '../components/UtilisateursAdmin';
+
+const ONGLETS = [
+  { id: 'demandes', libelle: 'Demandes' },
+  { id: 'cours', libelle: 'Cours' },
+  { id: 'utilisateurs', libelle: 'Utilisateurs' },
+];
 
 export default function Admin() {
-  const { donnees: profils, erreur } = useApi('/admin/profils');
+  const [onglet, setOnglet] = useState('demandes');
 
   return (
     <Layout titre="Supervision générale">
-      <h2>Demandes au secrétariat</h2>
-      <DemandesAdmin />
+      <div className="onglets">
+        {ONGLETS.map((o) => (
+          <button key={o.id}
+                  className={o.id === onglet ? '' : 'secondaire'}
+                  onClick={() => setOnglet(o.id)}>
+            {o.libelle}
+          </button>
+        ))}
+      </div>
 
-      <h2>Utilisateurs</h2>
-      {erreur && <p className="erreur">{erreur}</p>}
-      {!profils && !erreur && <p>Chargement...</p>}
-      {profils && (
-        <table>
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Rôle</th>
-              <th>Créé le</th>
-            </tr>
-          </thead>
-          <tbody>
-            {profils.map((p) => (
-              <tr key={p.id}>
-                <td>{p.nom_complet}</td>
-                <td>{LIBELLE_ROLE[p.role]}</td>
-                <td>{new Date(p.cree_le).toLocaleDateString('fr-BE')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      {onglet === 'demandes' && <DemandesAdmin />}
+      {onglet === 'cours' && <GestionCours />}
+      {onglet === 'utilisateurs' && <UtilisateursAdmin />}
     </Layout>
   );
 }
