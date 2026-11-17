@@ -3,7 +3,10 @@ const express = require('express');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+const originesAutorisees = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim());
+app.use(cors({ origin: originesAutorisees }));
 app.use(express.json());
 
 app.get('/health', (req, res) => {

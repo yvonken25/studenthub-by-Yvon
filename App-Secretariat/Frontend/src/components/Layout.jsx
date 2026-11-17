@@ -3,17 +3,22 @@ import { LIBELLE_ROLE } from '../auth/roles';
 
 export default function Layout({ titre, children }) {
   const { utilisateur, seDeconnecter } = useAuth();
+  const initiale = (utilisateur.nom_complet || '?').trim().charAt(0).toUpperCase();
 
   return (
     <div className="page">
       <header className="entete">
-        <div>
+        <div className="marque">
+          <span className="logo">S</span>
           <strong>StudentHub</strong>
           <span className="role">{LIBELLE_ROLE[utilisateur.role]}</span>
         </div>
-        <div>
-          <span>{utilisateur.nom_complet}</span>
-          <button onClick={seDeconnecter}>Déconnexion</button>
+        <div className="utilisateur">
+          <span className="avatar">{initiale}</span>
+          <span className="nom">{utilisateur.nom_complet}</span>
+          <button className="secondaire" onClick={seDeconnecter}>
+            Déconnexion
+          </button>
         </div>
       </header>
       <main className="contenu">

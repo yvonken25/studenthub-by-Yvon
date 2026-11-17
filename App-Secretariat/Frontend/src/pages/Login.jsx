@@ -30,9 +30,9 @@ export default function Login() {
   return (
     <div className="connexion">
       <form className="carte" onSubmit={soumettre}>
+                <span className="logo grand">S</span>
         <h1>StudentHub</h1>
-        <p>Connecte-toi à ton espace.</p>
-
+        <p className="sous-titre">Connecte-toi à ton espace.</p>
         <label>
           Adresse e-mail
           <input

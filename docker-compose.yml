@@ -1,0 +1,23 @@
+name: studenthub
+
+services:
+  backend:
+    build: ./App-Secretariat/Backend
+    env_file: ./App-Secretariat/Backend/.env
+    environment:
+      PORT: 3000
+      FRONTEND_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./App-Secretariat/Frontend
+      args:
+        VITE_API_URL: http://localhost:3000
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

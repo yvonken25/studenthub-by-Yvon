@@ -293,4 +293,85 @@ router.patch('/profils/:id/role', async (req, res) => {
   res.json(data);
 });
 
+
+// ============================ Tableau de bord ============================
+router.get('/statistiques', async (req, res) => {
+  const db = req.db;
+
+  async function compter(table, filtre) {
+    let requete = db.from(table).select('*', { count: 'exact', head: true });
+    if (filtre) requete = filtre(requete);
+    const { count, error } = await requete;
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  async function lire(requete) {
+    const { data, error } = await requete;
+    if (error) throw error;
+    return data;
+  }
+
+  try {
+    const [
+      etudiants, professeurs, admins,
+      coursTotal, coursSansProf,
+      inscriptionsTotal, notesTotal,
+      enAttente, acceptees, refusees,
+      inscriptions, notes, cours, recentes,
+    ] = await Promise.all([
+      compter('profils', (q) => q.eq('role', 'etudiant')),
+      compter('profils', (q) => q.eq('role', 'professeur')),
+      compter('profils', (q) => q.eq('role', 'admin')),
+      compter('cours'),
+      compter('cours', (q) => q.is('professeur_id', null)),
+      compter('inscriptions'),
+      compter('notes'),
+      compter('demandes', (q) => q.eq('statut', 'en_attente')),
+      compter('demandes', (q) => q.eq('statut', 'acceptee')),
+      compter('demandes', (q) => q.eq('statut', 'refusee')),
+      lire(db.from('inscriptions').select('cours_id').limit(10000)),
+      lire(db.from('notes').select('valeur').limit(10000)),
+      lire(db.from('cours').select('id, code, titre')),
+      lire(
+        db.from('demandes')
+          .select('id, objet, statut, cree_le, profils(nom_complet)')
+          .order('cree_le', { ascending: false })
+          .limit(5)
+      ),
+    ]);
+
+    // Effectif par cours
+    const effectifs = new Map();
+    for (const i of inscriptions) {
+      effectifs.set(i.cours_id, (effectifs.get(i.cours_id) ?? 0) + 1);
+    }
+    const coursPopulaires = cours
+      .map((c) => ({ id: c.id, code: c.code, titre: c.titre, etudiants: effectifs.get(c.id) ?? 0 }))
+      .sort((a, b) => b.etudiants - a.etudiants)
+      .slice(0, 5);
+
+    // Moyenne generale des notes
+    const moyenne =
+      notes.length > 0
+        ? Math.round((notes.reduce((s, n) => s + Number(n.valeur), 0) / notes.length) * 10) / 10
+        : null;
+
+    res.json({
+      utilisateurs: { etudiants, professeurs, admins, total: etudiants + professeurs + admins },
+      cours: { total: coursTotal, sans_professeur: coursSansProf },
+      inscriptions: inscriptionsTotal,
+      notes: { total: notesTotal, moyenne },
+      demandes: { en_attente: enAttente, acceptee: acceptees, refusee: refusees },
+      cours_populaires: coursPopulaires,
+      demandes_recentes: recentes.map(({ profils, ...d }) => ({
+        ...d,
+        etudiant: profils?.nom_complet ?? '',
+      })),
+    });
+  } catch (e) {
+    res.status(500).json({ erreur: e.message });
+  }
+});
+
 module.exports = router;
